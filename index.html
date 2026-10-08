@@ -1123,6 +1123,8 @@ input { border-width:1px; }
   #content { padding-left:10px; padding-right:10px; }
 }
 
+/* スマホの出題中だけ、Safariのバー表示時の高さに合わせる。 */
+html.quiz-viewport { height: 100svh; }
 </style>
 </head>
 <body>
@@ -9059,11 +9061,22 @@ function measureNoTransition(fn) {
 function fitQuizPage() {
   const root = document.getElementById('content');
   if (!root) return;
-  if (!QUIZ_SECTIONS.includes(state.section) || !document.querySelector('#section-' + state.section + ' .quiz-card')) { delete root.dataset.dense; return; }
+  const section = document.getElementById('section-' + state.section);
+  const active = QUIZ_SECTIONS.includes(state.section) && section && section.querySelector('.quiz-card');
+  const html = document.documentElement;
+  html.classList.toggle('quiz-viewport', !!active && isMobile());
+  if (!active) { delete root.dataset.dense; return; }
+  // Safariのバーが出入りしても、同じ問題の文字サイズを変えない。
+  // 100svhはバー表示時の高さ。キーボード表示などでさらに狭くなる場合は実際の高さを使う。
+  const stableHeight = isMobile() ? parseFloat(getComputedStyle(html).height) : window.innerHeight;
+  const availableHeight = Math.min(window.innerHeight, stableHeight || window.innerHeight);
   measureNoTransition(() => {
+    const padBottom = parseFloat(getComputedStyle(root).paddingBottom) || 0;
     for (let lv = 0; lv <= 5; lv++) {
       root.dataset.dense = lv;
-      if (document.documentElement.scrollHeight <= window.innerHeight) break;
+      // 文書全体の最低高さではなく、表示中の問題＋下部ナビ用の余白を測る。
+      const bottom = section.getBoundingClientRect().bottom + window.scrollY + padBottom;
+      if (bottom <= availableHeight + 1) break;
     }
   });
 }
