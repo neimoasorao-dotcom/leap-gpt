@@ -1125,6 +1125,134 @@ input { border-width:1px; }
 
 /* スマホの出題中だけ、Safariのバー表示時の高さに合わせる。 */
 html.quiz-viewport { height: 100svh; }
+/* LEAP semantic palette: colors only; geometry and learning behavior stay unchanged. */
+:root {
+  --color-bg:#f4f5f1;
+  --color-surface:#ffffff;
+  --color-surface-secondary:#f1f2ef;
+  --color-text:#202b32;
+  --color-text-secondary:#53616a;
+  --color-text-muted:#626e6c;
+  --color-border:#d8ddd8;
+  --color-divider:#e7eae5;
+  --color-control-border:#858e91;
+  --color-primary:#34546b;
+  --color-primary-hover:#29465b;
+  --color-primary-active:#213b4d;
+  --color-primary-soft:#eaf0f4;
+  --color-focus:var(--color-primary);
+  --color-success:#28634a;
+  --color-success-bg:#edf5ef;
+  --color-success-border:#579072;
+  --color-error:#99433f;
+  --color-error-bg:#faf0ee;
+  --color-error-border:#b5665d;
+  --color-warning:#795a21;
+  --color-warning-bg:#f8f3e8;
+  --color-review:#526c83;
+  --color-review-bg:#edf2f6;
+  --color-recovering:#5e647c;
+  --color-recovering-bg:#f0f0f5;
+  --color-mark:#95752d;
+  --color-mark-bg:#f7f0df;
+  --color-disabled-text:#626e6c;
+  --color-disabled-bg:#eef0ed;
+  --color-chart:#748c9c;
+  --color-chart-rate:var(--color-primary-hover);
+  --color-clean:#b9c8bd;
+  --color-heat-1:#e0e7eb;
+  --color-heat-2:#b6c5ce;
+  --color-heat-3:#748c9c;
+  --color-on-primary:#ffffff;
+  --bg:var(--color-bg);
+  --card:var(--color-surface);
+  --text:var(--color-text);
+  --muted:var(--color-text-muted);
+  --border:var(--color-border);
+  --primary:var(--color-primary);
+  --primary-light:var(--color-primary-soft);
+  --primary-dark:var(--color-primary-hover);
+  --accent:var(--color-chart);
+  --green:var(--color-success);
+  --red:var(--color-error);
+  --yellow:var(--color-warning);
+  --ui-soft:var(--color-surface-secondary);
+  --ui-gold:var(--color-mark);
+  --ui-example:var(--color-surface-secondary);
+  --c-mastered:var(--color-success);
+  --c-recovering:var(--color-recovering);
+  --c-review:var(--color-review);
+  --c-none:var(--color-divider);
+}
+#nav,.range-bar,.study-list-panel,.study-detail,.quiz-card,.score-card,.data-section,.set-card,.slot-card,.rec-card,.word-table { background-color:var(--color-surface); }
+.word-list-item,.word-table td,.word-table tr,.rec-rank > div,.rec-sess { border-bottom-color:var(--color-divider); border-top-color:var(--color-divider); }
+.study-detail .meanings-list li { border-bottom-color:var(--color-divider); }
+.study-detail .example { background:var(--color-surface-secondary); border-left-color:var(--color-border); }
+.study-detail .example .ex-jp,.set-help,.sync-meta { color:var(--color-text-secondary); }
+input { background:var(--color-surface); color:var(--color-text); border-color:var(--color-control-border); }
+input::placeholder { color:var(--color-text-muted); opacity:1; }
+input:focus { border-color:var(--color-focus); outline:2px solid var(--color-focus); outline-offset:2px; }
+button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus-visible { outline:2px solid var(--color-focus); outline-offset:2px; }
+.btn-primary,.next-btn,.submit-btn,.slot-btn.main { color:var(--color-on-primary); }
+.btn-primary:hover:not(:disabled),.next-btn:hover:not(:disabled),.submit-btn:hover:not(:disabled),.slot-btn.main:hover:not(:disabled) { background:var(--color-primary-hover); }
+.btn-primary:active:not(:disabled),.next-btn:active:not(:disabled),.submit-btn:active:not(:disabled),.slot-btn.main:active:not(:disabled) { background:var(--color-primary-active); }
+.btn-secondary:hover:not(:disabled),.act-btn:hover:not(:disabled),.slot-btn:hover:not(:disabled),.choice-btn:hover:not(:disabled) { background:var(--color-surface-secondary); }
+.slot-btn.main:hover:not(:disabled) { background:var(--color-primary-hover); }
+.filter-btn.active,.mode-option.active { border-color:var(--color-primary); }
+.choice-btn { background:var(--color-surface); color:var(--color-text); }
+.choice-btn:hover:not(:disabled) { border-color:var(--color-control-border); }
+.choice-btn:active:not(:disabled) { background:var(--color-primary-soft); border-color:var(--color-primary); }
+.choice-btn:disabled { opacity:1; background:var(--color-disabled-bg); color:var(--color-disabled-text); border-color:var(--color-border); }
+.choice-btn.correct,.choice-btn.correct:disabled { opacity:1; background:var(--color-success-bg); color:var(--color-success); border-color:var(--color-success-border); }
+.choice-btn.wrong,.choice-btn.wrong:disabled { opacity:1; background:var(--color-error-bg); color:var(--color-error); border-color:var(--color-error-border); }
+.result-box.ok { background:var(--color-success-bg); border-color:var(--color-success-border); }
+.result-box.ng { background:var(--color-error-bg); border-color:var(--color-error-border); }
+.st-review { background:var(--color-review-bg); color:var(--color-review); }
+.st-recovering { background:var(--color-recovering-bg); color:var(--color-recovering); }
+.st-mastered { background:var(--color-success-bg); color:var(--color-success); }
+.st-line-review { color:var(--color-review); }
+.st-line-recovering { color:var(--color-recovering); }
+.st-line-mastered { color:var(--color-success); }
+.st-dot-review,.sdot-review { background:var(--color-review); }
+.st-dot-recovering,.sdot-recovering { background:var(--color-recovering); }
+.st-dot-mastered,.sdot-mastered { background:var(--color-success); }
+.mark-btn,.word-table .td-word .mark-btn.sm { color:var(--color-text-muted); opacity:1; }
+.mark-btn:hover,.mark-btn.on,.result-box > .mark-btn:hover,.result-box > .mark-btn.on { color:var(--color-mark); }
+.mark-btn.on { background:var(--color-mark-bg); border-color:var(--color-mark); }
+.mark-btn:hover { border-color:var(--color-mark); }
+.result-box > .mark-btn.on { background:transparent; }
+.li-star,.filter-btn .ico,#mark-toast .on { color:var(--color-mark); }
+#mark-toast { background:var(--color-text); color:var(--color-on-primary); }
+#mark-toast .on { color:var(--color-mark-bg); }
+.rv-notice { color:var(--color-warning); background:var(--color-warning-bg); }
+.btn-danger,.slot-btn.danger,.dz-btn { color:var(--color-error); border-color:var(--color-error-border); }
+.btn-danger,.set-card.danger .set-ico { background:var(--color-error-bg); color:var(--color-error); }
+.set-card.danger { border-color:var(--color-error-border); }
+.dz-row { border-top-color:var(--color-divider); }
+.dz-btn:hover { background:var(--color-error-bg); }
+.dz-btn.strong { background:var(--color-error); border-color:var(--color-error); color:var(--color-on-primary); }
+.dz-btn.strong:hover { background:var(--color-error); }
+.sync-msg { color:var(--color-error); }
+.sync-dot { background:var(--color-control-border); }
+.sync-dot.ok { background:var(--color-success); }
+.sync-dot.err { background:var(--color-error); }
+.sync-dot.busy { background:var(--color-warning); }
+.seg,.rec-mini { background:var(--color-disabled-bg); }
+.seg button.active,.rec-mini button.on { background:var(--color-surface); color:var(--color-primary); }
+.rec-bars i { background:var(--color-chart); }
+.rec-bars .tdy i { background:var(--color-primary); }
+.rec-chart rect[fill="#9fd0b5"] { fill:var(--color-chart); }
+.rec-chart line[stroke="#e1ebe5"] { stroke:var(--color-divider); }
+.rec-chart polyline { stroke:var(--color-chart-rate); }
+.rec-heat i.l1 { background:var(--color-heat-1); }
+.rec-heat i.l2 { background:var(--color-heat-2); }
+.rec-heat i.l3 { background:var(--color-heat-3); }
+.rec-heat i.l4 { background:var(--color-primary); }
+.slot-strip i,.slot-card.active .slot-strip i:not([style]) { background:var(--color-divider); }
+.btn-primary:disabled,.act-btn:disabled,.slot-new:disabled,.next-btn:disabled,.submit-btn:disabled { opacity:1; background:var(--color-disabled-bg); color:var(--color-disabled-text); border-color:var(--color-border); }
+.word-table .td-word .mark-btn.sm.on,.word-table .td-word .mark-btn.sm:hover { color:var(--color-mark); }
+.slot-btn.main:active:not(:disabled) { background:var(--color-primary-active); }
+
 </style>
 </head>
 <body>
@@ -9264,7 +9392,7 @@ function renderTestScore() {
   const total = state.testQueue.length;
   const pct = Math.round(state.testScore / total * 100);
   let wrongList = state.testWrong.length ?
-    state.testWrong.map(w => `<div style="padding:6px 0;border-bottom:1px solid #f0f5f2;font-size:14px;"><b>${escHtml(w.word)}</b> — ${w.meanings.map(m=>escHtml(m)).join(' / ')}</div>`).join('') :
+    state.testWrong.map(w => `<div style="padding:6px 0;border-bottom:1px solid var(--color-divider);font-size:14px;"><b>${escHtml(w.word)}</b> — ${w.meanings.map(m=>escHtml(m)).join(' / ')}</div>`).join('') :
     '<div style="color:var(--green);font-weight:700;padding:12px 0;">全問正解！🎉</div>';
 
   endSession('test');
@@ -9393,7 +9521,7 @@ function renderTypingScore() {
   const total = state.typingQueue.length;
   const pct = Math.round(state.typingScore / total * 100);
   let wrongList = state.typingWrong.length ?
-    state.typingWrong.map(w=>`<div style="padding:6px 0;border-bottom:1px solid #f0f5f2;font-size:14px;"><b>${escHtml(w.word)}</b> — ${w.meanings.map(m=>escHtml(m)).join(' / ')}</div>`).join('') :
+    state.typingWrong.map(w=>`<div style="padding:6px 0;border-bottom:1px solid var(--color-divider);font-size:14px;"><b>${escHtml(w.word)}</b> — ${w.meanings.map(m=>escHtml(m)).join(' / ')}</div>`).join('') :
     '<div style="color:var(--green);font-weight:700;padding:12px 0;">全問正解！🎉</div>';
   endSession('typing');
     sec.innerHTML = `<div class="score-card">
@@ -10338,12 +10466,12 @@ function recSummaryHtml() {
       ${recTile(today.a, '問', '今日の解答')}${recTile(today.a ? Math.round(today.c / today.a * 100) : '—', today.a ? '%' : '', '今日の正答率')}${recTile(st.cur, '日', '連続学習日数')}
     </div>
     <div class="rec-card"><h3>単語の状況<small>全${MAX_NO.toLocaleString()}語</small></h3>
-      <div class="rec-stack"><i style="width:${pct(sc.mastered)};background:var(--c-mastered)"></i><i style="width:${pct(sc.recovering)};background:var(--c-recovering)"></i><i style="width:${pct(sc.review)};background:var(--c-review)"></i><i style="width:${pct(clean)};background:#b7dcc5"></i></div>
-      <div class="rec-leg"><span style="--c:var(--c-mastered)">克服済み <b>${sc.mastered}</b></span><span style="--c:var(--c-recovering)">克服中 <b>${sc.recovering}</b></span><span style="--c:var(--c-review)">要復習 <b>${sc.review}</b></span><span style="--c:#b7dcc5">間違いなし <b>${clean}</b></span><span style="--c:var(--c-none)">未解答 <b>${unans.toLocaleString()}</b></span></div></div>
+      <div class="rec-stack"><i style="width:${pct(sc.mastered)};background:var(--c-mastered)"></i><i style="width:${pct(sc.recovering)};background:var(--c-recovering)"></i><i style="width:${pct(sc.review)};background:var(--c-review)"></i><i style="width:${pct(clean)};background:var(--color-clean)"></i></div>
+      <div class="rec-leg"><span style="--c:var(--c-mastered)">克服済み <b>${sc.mastered}</b></span><span style="--c:var(--c-recovering)">克服中 <b>${sc.recovering}</b></span><span style="--c:var(--c-review)">要復習 <b>${sc.review}</b></span><span style="--c:var(--color-clean)">間違いなし <b>${clean}</b></span><span style="--c:var(--c-none)">未解答 <b>${unans.toLocaleString()}</b></span></div></div>
     <div class="rec-card opt"><h3>今週の解答数<small>合計 ${wTotal}問</small></h3><div class="rec-bars">${bars}</div></div>
     <div class="rec-card opt"><h3>今週の学習時間<small>合計 ${fmtDurShort(wts + wtq)}</small></h3>
-      <div class="rec-stack thin"><i style="width:${(wts + wtq) ? (wts / (wts + wtq) * 100) : 0}%;background:#9fd0b5"></i><i style="width:${(wts + wtq) ? (wtq / (wts + wtq) * 100) : 0}%;background:var(--primary)"></i></div>
-      <div class="rec-leg"><span style="--c:#9fd0b5">学習ページ <b>${fmtDurShort(wts)}</b></span><span style="--c:var(--primary)">テスト・復習など <b>${fmtDurShort(wtq)}</b></span></div></div>`;
+      <div class="rec-stack thin"><i style="width:${(wts + wtq) ? (wts / (wts + wtq) * 100) : 0}%;background:var(--color-chart)"></i><i style="width:${(wts + wtq) ? (wtq / (wts + wtq) * 100) : 0}%;background:var(--primary)"></i></div>
+      <div class="rec-leg"><span style="--c:var(--color-chart)">学習ページ <b>${fmtDurShort(wts)}</b></span><span style="--c:var(--primary)">テスト・復習など <b>${fmtDurShort(wtq)}</b></span></div></div>`;
 }
 function dayFromKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
 
@@ -10369,7 +10497,7 @@ function recTrendHtml() {
     <div class="rec-card grow"><h3>解答数と正答率<small>${tot.a ? '期間の正答率 ' + Math.round(tot.c / tot.a * 100) + '%' : 'まだ記録がありません'}</small></h3>
       <div class="rec-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="110" x2="300" y2="110" stroke="#e1ebe5" stroke-width="1"/>${bars}${pts.length > 1 ? `<polyline fill="none" stroke="#c58a12" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${pts.join(' ')}"/>` : ''}</svg></div>
       <div class="rec-axis"><span>${md(days[0])}</span><span>最大 ${maxA}問/日</span><span>${md(days[span - 1])}</span></div>
-      <div class="rec-leg"><span style="--c:#9fd0b5">解答数</span><span style="--c:var(--c-recovering)">正答率</span></div></div>
+      <div class="rec-leg"><span style="--c:var(--color-chart)">解答数</span><span style="--c:var(--color-chart-rate)">正答率</span></div></div>
     <div class="rec-card opt" style="order:2"><h3>学習した日<small>濃いほど多く解いた日</small></h3><div class="rec-heat">${cells}</div></div>
     <div class="rec-tiles opt" style="order:3">${recTile(st.cur, '日', '連続学習')}${recTile(st.longest, '日', '最長記録')}${recTile(st.total, '日', '学習した日数')}</div>`;
 }
@@ -10386,7 +10514,7 @@ function recRangeHtml() {
       if (history[no]) ans++;
     }
     const w = x => (x / n * 100).toFixed(1) + '%';
-    rows.push(`<div class="rec-row" title="解答済み ${ans}/${n}語"><span>${s0}–${e0}</span><div class="rec-stack"><i style="width:${w(m)};background:var(--c-mastered)"></i><i style="width:${w(v)};background:var(--c-recovering)"></i><i style="width:${w(r)};background:var(--c-review)"></i><i style="width:${w(cl)};background:#b7dcc5"></i></div><em>${Math.round(ans / n * 100)}%</em></div>`);
+    rows.push(`<div class="rec-row" title="解答済み ${ans}/${n}語"><span>${s0}–${e0}</span><div class="rec-stack"><i style="width:${w(m)};background:var(--c-mastered)"></i><i style="width:${w(v)};background:var(--c-recovering)"></i><i style="width:${w(r)};background:var(--c-review)"></i><i style="width:${w(cl)};background:var(--color-clean)"></i></div><em>${Math.round(ans / n * 100)}%</em></div>`);
   }
   const mode = state.recRank || 'miss';
   let list;
@@ -10402,7 +10530,7 @@ function recRangeHtml() {
     : `<div class="rec-empty">${mode === 'miss' ? 'まだ間違えた単語がありません' : '解答時間の記録がたまると、ここに表示されます'}</div>`;
   return `<div class="rec-card grow2"><h3>100語ごとの達成度<small>数字＝解答済みの割合</small></h3>
       <div class="rec-rows">${rows.join('')}</div>
-      <div class="rec-leg" style="margin-top:8px"><span style="--c:var(--c-mastered)">克服済み</span><span style="--c:var(--c-recovering)">克服中</span><span style="--c:var(--c-review)">要復習</span><span style="--c:#b7dcc5">間違いなし</span></div></div>
+      <div class="rec-leg" style="margin-top:8px"><span style="--c:var(--c-mastered)">克服済み</span><span style="--c:var(--c-recovering)">克服中</span><span style="--c:var(--c-review)">要復習</span><span style="--c:var(--color-clean)">間違いなし</span></div></div>
     <div class="rec-card opt"><h3>苦手ランキング<span class="rec-mini"><button type="button" class="${mode === 'miss' ? 'on' : ''}" onclick="setRecRank('miss')">間違い</button><button type="button" class="${mode === 'slow' ? 'on' : ''}" onclick="setRecRank('slow')">遅い</button></span></h3><div class="rec-rank">${rank}</div></div>`;
 }
 
