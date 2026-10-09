@@ -905,14 +905,15 @@ html.no-trans *, html.no-trans *::before, html.no-trans *::after { transition: n
   #nav .nav-btn { font-size: 8.5px; }
 }
 
-/* ── 学習：★の位置（スマホは下の操作列、PCは単語の右） ── */
+/* ── 学習：★はPC・スマホとも単語と同じ高さの右端 ── */
 .mark-btn { -webkit-tap-highlight-color: transparent; }
 .study-nav-row .mark-btn { display: none; }
 @media (max-width: 640px) {
-  .word-head .mark-btn { display: none; }
-  .study-nav-row .mark-btn { display: grid; flex: none; width: 60px; height: auto; align-self: stretch; padding: 0; margin: 0; border-radius: 12px; border-width: 1.5px; }
-  .study-nav-row .mark-btn .ico { width: 26px; height: 26px; }
-  .study-nav-row .mark-btn:active { transform: scale(0.96); }
+  #section-study .word-head { align-items: center; }
+  #section-study .word-head .word-en { min-width: 0; }
+  #section-study .word-head .mark-btn { display: inline-grid; margin-top: 0; }
+  #section-study .study-nav-row .mark-btn { display: none; }
+  #section-study .word-head .mark-btn:active { transform: scale(0.96); }
 }
 
 /* ── マークしたことの知らせ（キーで切り替えたとき） ── */
