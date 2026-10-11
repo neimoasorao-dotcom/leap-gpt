@@ -4,6 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>LEAP 英単語学習</title>
+<meta name="color-scheme" content="light dark">
+<script>
+// 表示設定は学習記録と分け、最初の描画より前に反映する。
+(function () {
+  const key = 'leap_theme';
+  const modes = ['light', 'dark', 'system'];
+  const labels = { light: 'ライト', dark: 'ダーク', system: 'システム' };
+  const paths = {
+    light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>',
+    dark: '<path d="M20.7 13.1A9 9 0 0 1 10.9 3.3 9 9 0 1 0 20.7 13.1Z"/>',
+    system: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4M8 21h8"/><path d="M12 7a3.5 3.5 0 0 1 0 7Z" fill="currentColor" stroke="none"/>',
+  };
+  const preference = window.matchMedia('(prefers-color-scheme: dark)');
+  let mode = 'system';
+  try {
+    const saved = localStorage.getItem(key);
+    if (modes.includes(saved)) mode = saved;
+  } catch (e) { /* 保存が使えない場合も切り替えは可能 */ }
+  function apply() {
+    const root = document.documentElement;
+    root.dataset.themeMode = mode;
+    root.dataset.theme = mode === 'system' ? (preference.matches ? 'dark' : 'light') : mode;
+    const button = document.getElementById('theme-toggle');
+    if (button) {
+      const next = modes[(modes.indexOf(mode) + 1) % modes.length];
+      button.setAttribute('aria-label', '表示モード: ' + labels[mode] + '。' + labels[next] + 'に切り替え');
+      button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[mode] + '</svg>';
+    }
+  }
+  window.cycleTheme = function () {
+    mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+    try { localStorage.setItem(key, mode); } catch (e) {}
+    apply();
+  };
+  if (preference.addEventListener) preference.addEventListener('change', apply);
+  else preference.addListener(apply); // 古いSafari
+  window.addEventListener('storage', e => {
+    if (e.key === key || e.key === null) {
+      mode = modes.includes(e.newValue) ? e.newValue : 'system';
+      apply();
+    }
+  });
+  document.addEventListener('DOMContentLoaded', apply);
+  apply();
+})();
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -1254,6 +1300,104 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 .word-table .td-word .mark-btn.sm.on,.word-table .td-word .mark-btn.sm:hover { color:var(--color-mark); }
 .slot-btn.main:active:not(:disabled) { background:var(--color-primary-active); }
 
+/* 配色だけを切り替え、学習画面の配置や教材は共通にする。 */
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg:#151b20;
+  --color-surface:#1d252c;
+  --color-surface-secondary:#252f37;
+  --color-text:#e3e9ec;
+  --color-text-secondary:#b8c4cd;
+  --color-text-muted:#a6b4be;
+  --color-border:#3b4852;
+  --color-divider:#303d46;
+  --color-control-border:#6d808e;
+  --color-primary:#a0c5df;
+  --color-primary-hover:#bad8eb;
+  --color-primary-active:#d0e5f2;
+  --color-primary-soft:#293c4a;
+  --color-success:#95d4ae;
+  --color-success-bg:#20392d;
+  --color-success-border:#659b7b;
+  --color-error:#f0aaa2;
+  --color-error-bg:#3f292a;
+  --color-error-border:#b87670;
+  --color-warning:#e2c48a;
+  --color-warning-bg:#3c3324;
+  --color-review:#a6c4de;
+  --color-review-bg:#293947;
+  --color-recovering:#c3bedf;
+  --color-recovering-bg:#332f43;
+  --color-mark:#e5c77f;
+  --color-mark-bg:#3b3425;
+  --color-disabled-text:#96a5ae;
+  --color-disabled-bg:#293138;
+  --color-chart:#8baabd;
+  --color-clean:#688776;
+  --color-heat-1:#2d3e49;
+  --color-heat-2:#496779;
+  --color-heat-3:#8baabd;
+  --color-on-primary:#15232d;
+}
+:root[data-theme="dark"] .study-tabs,
+:root[data-theme="dark"] .study-tab-btn,
+:root[data-theme="dark"] .study-nav-row,
+:root[data-theme="dark"] .range-summary,
+:root[data-theme="dark"] .range-carry-btn,
+:root[data-theme="dark"] .hide-toggle-btn,
+:root[data-theme="dark"] .slot-btn,
+:root[data-theme="dark"] .act-btn,
+:root[data-theme="dark"] .mode-option,
+:root[data-theme="dark"] .filter-btn,
+:root[data-theme="dark"] .mark-btn,
+:root[data-theme="dark"] .sync-input,
+:root[data-theme="dark"] .word-table tr,
+:root[data-theme="dark"] .dz-btn { background:var(--color-surface); }
+:root[data-theme="dark"] .stat-tile,
+:root[data-theme="dark"] .rec-tile,
+:root[data-theme="dark"] .slot-btn.danger { border-color:var(--color-border); }
+:root[data-theme="dark"] .slot-card.active,
+:root[data-theme="dark"] .study-tab-btn.active,
+:root[data-theme="dark"] .hide-toggle-btn.on,
+:root[data-theme="dark"] .mode-option.active,
+:root[data-theme="dark"] .filter-btn.active { background:var(--color-primary-soft); }
+:root[data-theme="dark"] .slot-active-badge,
+:root[data-theme="dark"] .slot-btn.main,
+:root[data-theme="dark"] .nav-btn.active,
+:root[data-theme="dark"] .rec-chips button.on { background:var(--color-primary); color:var(--color-on-primary); }
+:root[data-theme="dark"] .mark-btn.on { background:var(--color-mark-bg); }
+:root[data-theme="dark"] .result-box > .mark-btn { background:transparent; }
+:root[data-theme="dark"] .choice-key,
+:root[data-theme="dark"] .quiz-progress-bar,
+:root[data-theme="dark"] .rec-chips button { background:var(--color-surface-secondary); }
+:root[data-theme="dark"] .rec-chips button.on { background:var(--color-primary); }
+:root[data-theme="dark"] .dz-btn.strong { background:var(--color-error); color:var(--color-on-primary); }
+:root[data-theme="dark"] .filter-btn .sdot { box-shadow:0 0 0 1.5px var(--color-surface); }
+:root[data-theme="dark"] #mark-toast { background:var(--color-surface-secondary); color:var(--color-text); border:1px solid var(--color-border); }
+:root[data-theme="dark"] #mark-toast .on { color:var(--color-mark); }
+:root[data-theme="dark"] .slot-btn.main:hover,
+:root[data-theme="dark"] .nav-btn.active:hover { background:var(--color-primary-hover); }
+:root[data-theme="dark"] .act-btn:hover,
+:root[data-theme="dark"] .slot-btn:hover,
+:root[data-theme="dark"] .quiz-quit:hover { background:var(--color-surface-secondary); }
+:root[data-theme="dark"] .dz-btn:hover { background:var(--color-error-bg); }
+:root[data-theme="dark"] .dz-btn.strong:hover { background:var(--color-error); }
+/* モバイルの選択中ナビは、ほかの項目と同じ控えめな背景にする。 */
+@media (max-width:640px) {
+  :root[data-theme="dark"] #nav .nav-btn.active { background:var(--color-primary-soft); color:var(--color-primary); }
+}
+.theme-toggle {
+  margin-left:auto; flex:none; align-self:center; display:grid; place-items:center;
+  width:36px; height:36px; padding:0; border:1px solid var(--color-border); border-radius:6px;
+  background:var(--color-surface-secondary); color:var(--color-text-secondary);
+}
+.theme-toggle svg { width:19px; height:19px; }
+.theme-toggle:hover { background:var(--color-primary-soft); color:var(--color-primary); }
+@media (max-width:640px) {
+  .theme-toggle { width:36px; height:44px; margin-left:3px; }
+}
+
 </style>
 </head>
 <body>
@@ -1266,6 +1410,7 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
     <button class="nav-btn" onclick="showSection('wordlist')"><span class="nav-icon" data-icon="wordlist"></span>一覧</button>
     <button class="nav-btn" onclick="showSection('record')"><span class="nav-icon" data-icon="chart"></span>記録</button>
     <button class="nav-btn" onclick="showSection('settings')"><span class="nav-icon" data-icon="settings"></span>設定</button>
+    <button type="button" id="theme-toggle" class="theme-toggle" onclick="cycleTheme()" aria-label="表示モード: システム。ライトに切り替え"></button>
   </div>
 
   <div id="content">
@@ -10659,6 +10804,8 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
   Review  : テスト/タイピングと同様
 */
 document.addEventListener('keydown', function(e) {
+  // 表示モードのボタンは、Enter/Spaceで通常どおり操作する。
+  if (e.target && e.target.closest('#theme-toggle')) return;
   // inputにフォーカス中は Enter のみ各inputのinlineハンドラに任せ、他は無視
   // e.target でイベント発生元を判定（blur()後にactiveElementが変わっても正しく判定できる）
   const tag = e.target && e.target.tagName;
