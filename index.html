@@ -1396,6 +1396,7 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 .theme-toggle:hover { background:var(--color-primary-soft); color:var(--color-primary); }
 @media (max-width:640px) {
   .theme-toggle { width:36px; height:44px; margin-left:3px; }
+  .quiz-card { touch-action:pan-y; }
 }
 
 </style>
@@ -3746,6 +3747,7 @@ let state = {
   typingQueue: [], typingQIdx: 0, typingAnswered: false,
   typingScore: 0, typingWrong: [],
   // Review
+  reviewStart: 1, reviewEnd: MAX_NO,
   reviewMode: 'test', // test | typing
   reviewQueue: [], reviewQIdx: 0, reviewAnswered: false,
   // List
@@ -3944,7 +3946,7 @@ function inReviewPool(no) {
   return (reviewSel.has('review') && st === 'review') || (reviewSel.has('recovering') && st === 'recovering') ||
          (reviewSel.has('mastered') && st === 'mastered') || (reviewSel.has('marked') && !!markRec[no]);
 }
-function reviewPoolWords() { return WORDS.filter(w => inReviewPool(w.no)); }
+function reviewPoolWords() { return getRange(state.reviewStart, state.reviewEnd).filter(w => inReviewPool(w.no)); }
 function reviewPoolSize() { return reviewPoolWords().length; }
 function statusOf(no) {
   const r = missRec[no];
@@ -4035,9 +4037,10 @@ const STATUS_INFO = {
 };
 function missCountOf(no) { const r = missRec[no]; return r ? (r.n || 0) : 0; }
 // 状態の集計 { review, recovering, mastered, ever }
-function statusCounts() {
+function statusCounts(start = 1, end = MAX_NO) {
   const o = { review: 0, recovering: 0, mastered: 0, ever: 0 };
   for (const k in missRec) {
+    if (Number(k) < start || Number(k) > end) continue;
     const st = statusOf(k);
     if (st !== 'none') { o[st]++; o.ever++; }
   }
@@ -4064,8 +4067,22 @@ function statusLineHtml(no, isCorrect) {
   return `<div class="st-line st-line-${st}">${text}</div>`;
 }
 
+const AUTO_MARK_ERRORS_KEY = 'leap_auto_mark_errors';
+let autoMarkErrors = true;
+try { autoMarkErrors = localStorage.getItem(AUTO_MARK_ERRORS_KEY) !== '0'; } catch (e) {}
+function autoMarkErrorsControl() {
+  return `<div style="margin-bottom:12px"><button type="button" class="hide-toggle-btn ${autoMarkErrors ? 'on' : ''}" onclick="toggleAutoMarkErrors()" aria-label="誤答時の自動スター" aria-pressed="${autoMarkErrors}">${icon('star')}誤答時にスター: ${autoMarkErrors ? 'ON' : 'OFF'}</button></div>`;
+}
+window.toggleAutoMarkErrors = function() {
+  autoMarkErrors = !autoMarkErrors;
+  try { localStorage.setItem(AUTO_MARK_ERRORS_KEY, autoMarkErrors ? '1' : '0'); } catch (e) {}
+  renderSection(state.section);
+};
+
 function markWrong(no) {
   const r = missRec[no] || (missRec[no] = { n: 0, s: 0, t: 0 });
+  // 既存のスターは外さず、誤答した単語を自動でマークする。
+  if (autoMarkErrors && !markRec[no]) markRec[no] = Date.now();
   r.n++; r.s = 0; r.t = Date.now(); touch(no);
   wrongSet.add(no);
   if (!history[no]) history[no] = {correct:0,total:0};
@@ -4158,7 +4175,7 @@ function applySlotData(d) {
   RANGE_PAGES.forEach(p => {
     const r = d.ranges && d.ranges[p.id];
     const ok = Array.isArray(r) && r.length === 2 && r[0] >= 1 && r[1] <= MAX_NO && r[0] <= r[1];
-    p.set(ok ? r[0] : 1, ok ? r[1] : 50);
+    p.set(ok ? r[0] : 1, ok ? r[1] : (p.defaultEnd || 50));
     window._rangeTouched[p.id] = !!ok;
     window._rangeOpen[p.id] = false;
   });
@@ -4445,6 +4462,7 @@ function normalizeTypingInput(s) {
 
 // ── SECTION ROUTER ──
 function showSection(name) {
+  if (state.section === 'study' && name !== 'study') stopSpeaking();
   state.section = name;
   document.querySelectorAll('.section').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.nav-btn').forEach((btn, i) => {
@@ -4500,6 +4518,7 @@ const RANGE_PAGES = [
   { id: 'study',  label: '学習',       get: () => [state.studyStart,  state.studyEnd],  set: (s, e) => { state.studyStart = s;  state.studyEnd = e; } },
   { id: 'test',   label: 'テスト',     get: () => [state.testStart,   state.testEnd],   set: (s, e) => { state.testStart = s;   state.testEnd = e; } },
   { id: 'typing', label: 'タイピング', get: () => [state.typingStart, state.typingEnd], set: (s, e) => { state.typingStart = s; state.typingEnd = e; } },
+  { id: 'review', label: '復習', defaultEnd: MAX_NO, get: () => [state.reviewStart, state.reviewEnd], set: (s, e) => { state.reviewStart = s; state.reviewEnd = e; } },
 ];
 // 他ページで指定済みの範囲を、ワンタップで適用できるボタン群を返す。
 // 現在の範囲と同じもの・未指定のページは出さない。同じ範囲は1つにまとめる。
@@ -9197,6 +9216,9 @@ function pronHtml(word) {
 function speak(word) {
   if (!('speechSynthesis' in window)) return;
   try {
+    // 対応するSafariでは、ほかのアプリの音声と混ぜる設定を指定する。
+    // OS側の音声合成の挙動までは保証されないため、実機での確認が必要。
+    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {}
     const synth = window.speechSynthesis;
     synth.cancel();
     const u = new SpeechSynthesisUtterance(String(word).replace(/\(s\)$/, 's'));   // afterward(s) → afterwards
@@ -9207,6 +9229,25 @@ function speak(word) {
     synth.speak(u);
   } catch (e) { /* 音声が使えない環境では何もしない */ }
 }
+
+// 自動読み上げは端末ごとの設定。学習記録の保存形式は変えない。
+const STUDY_AUTO_SPEAK_KEY = 'leap_study_auto_speak';
+let studyAutoSpeak = false;
+try { studyAutoSpeak = localStorage.getItem(STUDY_AUTO_SPEAK_KEY) === '1'; } catch (e) {}
+function stopSpeaking() {
+  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+}
+function speakStudyWord() {
+  if (!studyAutoSpeak || state.section !== 'study' || (isMobile() && state.studyTab !== 'detail')) return;
+  const word = getRange(state.studyStart, state.studyEnd)[state.studyIdx];
+  if (word) speak(word.word);
+}
+window.toggleStudyAutoSpeak = function() {
+  studyAutoSpeak = !studyAutoSpeak;
+  try { localStorage.setItem(STUDY_AUTO_SPEAK_KEY, studyAutoSpeak ? '1' : '0'); } catch (e) {}
+  renderStudy();
+  if (studyAutoSpeak) speakStudyWord(); else stopSpeaking();
+};
 
 function getExample(word) {
   if (EXAMPLES[word]) return EXAMPLES[word];
@@ -9280,6 +9321,7 @@ function renderStudy() {
       <div class="word-meta-row">
         <div class="word-num">No.${cur.no} &nbsp;|&nbsp; ${state.studyIdx+1} / ${words.length}</div>
         <button type="button" class="hide-toggle-btn ${state.studyHide ? 'on' : ''}" onclick="studyToggleHide(); this.blur();" aria-pressed="${state.studyHide}">${icon(state.studyHide ? 'eyeoff' : 'eye')}意味を隠す: ${state.studyHide ? 'ON' : 'OFF'}</button>
+        ${'speechSynthesis' in window ? `<button type="button" class="hide-toggle-btn ${studyAutoSpeak ? 'on' : ''}" onclick="toggleStudyAutoSpeak(); this.blur();" aria-pressed="${studyAutoSpeak}" aria-label="自動読み上げ">${icon('speaker')}自動読み上げ: ${studyAutoSpeak ? 'ON' : 'OFF'}</button>` : ''}
       </div>
       ${statusBadgeHtml(cur.no) ? `<div class="st-row">${statusBadgeHtml(cur.no)}</div>` : ''}
       <div class="reveal-area">
@@ -9374,28 +9416,38 @@ function fitStudyContent() {
   });
 }
 window.addEventListener('resize', () => { if (state && state.section === 'study') fitStudyLayout(); });
-window.studyTab = function(tab) { state.studyTab = tab; renderStudy(); };
+window.studyTab = function(tab) {
+  const changed = state.studyTab !== tab;
+  state.studyTab = tab; renderStudy();
+  if (tab === 'list') stopSpeaking(); else if (changed) speakStudyWord();
+};
 window.studySelect = function(i) {
+  const changed = i !== state.studyIdx || (isMobile() && state.studyTab !== 'detail');
   if (i !== state.studyIdx) state.studyRevealed = false;
   state.studyIdx = i;
   recordStudyPos();
   if (isMobile()) state.studyTab = 'detail';
   renderStudy();
+  if (changed) speakStudyWord();
 };
 window.studyNext = function() {
   const words = getRange(state.studyStart, state.studyEnd);
   const ni = Math.min(state.studyIdx + 1, words.length - 1);
+  const changed = ni !== state.studyIdx;
   if (ni !== state.studyIdx) state.studyRevealed = false;
   state.studyIdx = ni;
   recordStudyPos();
   renderStudy();
+  if (changed) speakStudyWord();
 };
 window.studyPrev = function() {
   const pi = Math.max(state.studyIdx - 1, 0);
+  const changed = pi !== state.studyIdx;
   if (pi !== state.studyIdx) state.studyRevealed = false;
   state.studyIdx = pi;
   recordStudyPos();
   renderStudy();
+  if (changed) speakStudyWord();
 };
 // 意味を表示する（再描画せずシートだけ外すので、画面位置は動かない）
 window.studyReveal = function() {
@@ -9439,6 +9491,7 @@ function renderTestSetup() {
       <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">出題形式</div>
       <div class="mode-grid">${modeButtons}</div>
     </div>
+    ${autoMarkErrorsControl()}
     <button class="btn-primary" onclick="startTest()">テスト開始</button>`;
 }
 window.setTestMode = function(m) { state.testMode = m; renderTestSetup(); };
@@ -9564,6 +9617,7 @@ function renderTypingSetup() {
   sec.innerHTML = `<h2 style="font-size:18px;font-weight:800;margin-bottom:14px;"><span class="h-ico">${icon('typing')}</span>タイピングモード</h2>
     ${rangeWidget('typing', state.typingStart, state.typingEnd)}
     <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">日本語の意味を見て英単語を入力してください。大文字・小文字は無視します。</p>
+    ${autoMarkErrorsControl()}
     <button class="btn-primary" onclick="startTyping()">スタート</button>`;
 }
 
@@ -9694,12 +9748,15 @@ function reviewSummaryHtml() {
 }
 function renderReview() {
   const sec = document.getElementById('section-review');
-  const sc = statusCounts();
-  const nMark = Object.keys(markRec).length;
+  window._rangeCallbacks.review = (s, e) => { state.reviewStart = s; state.reviewEnd = e; renderReview(); };
+  const range = rangeWidget('review', state.reviewStart, state.reviewEnd);
+  const heading = `<h2 style="font-size:18px;font-weight:800;margin-bottom:14px;"><span class="h-ico">${icon('review')}</span>復習モード</h2>`;
+  const sc = statusCounts(state.reviewStart, state.reviewEnd);
+  const nMark = getRange(state.reviewStart, state.reviewEnd).filter(w => !!markRec[w.no]).length;
   if (!sc.ever && !nMark) {
-    sec.innerHTML = `<div class="empty">
+    sec.innerHTML = `${heading}${range}<div class="empty">
       <div style="font-size:48px;margin-bottom:16px;">🎉</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">復習が必要な単語はありません！</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">この範囲に復習が必要な単語はありません！</div>
       <div>テストやタイピングで間違えた単語や、学習ページでマークした単語がここに表示されます。</div>
     </div>`;
     return;
@@ -9725,7 +9782,7 @@ function renderReview() {
     const active = state.reviewMode === m ? 'active' : '';
     return `<button class="mode-option ${active}" onclick="setReviewMode('${m}')"><span class="mode-icon">${icons[m]}</span>${labels[m]}</button>`;
   }).join('');
-  sec.innerHTML = `<h2 style="font-size:18px;font-weight:800;margin-bottom:14px;"><span class="h-ico">${icon('review')}</span>復習モード</h2>
+  sec.innerHTML = `${heading}${range}
     <div class="data-section" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">出題する単語（複数選べます）</div>
       <div class="rv-chips">${chips}</div>
@@ -9739,6 +9796,7 @@ function renderReview() {
       <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">出題形式</div>
       <div class="mode-grid">${modeButtons}</div>
     </div>
+    ${autoMarkErrorsControl()}
     <button class="btn-primary" onclick="startReview()" ${poolN ? '' : 'disabled'}>復習開始</button>`;
 }
 window.toggleReviewSel = function(k) {
@@ -9761,7 +9819,7 @@ window.startReview = function() {
   state.reviewQueue = [...shuffle(wrongWords.filter(w => statusOf(w.no) === 'review')), ...shuffle(wrongWords.filter(w => statusOf(w.no) !== 'review'))];
   state.reviewQIdx = 0; state.reviewAnswered = false;
   const RLAB = { review: '要復習', recovering: '克服中', mastered: '克服済み', marked: 'マーク' };
-  beginSession('review', REVIEW_SEL_KEYS.filter(k => reviewSel.has(k)).map(k => RLAB[k]).join('＋'));
+  beginSession('review', `No.${state.reviewStart}〜${state.reviewEnd} ` + REVIEW_SEL_KEYS.filter(k => reviewSel.has(k)).map(k => RLAB[k]).join('＋'));
   if (state.reviewMode === 'test') renderReviewTestQ();
   else renderReviewTypingQ();
 };
@@ -10782,17 +10840,54 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
     const dir = dx < 0 ? 1 : -1;
     const go = e.type === 'touchend' && (Math.abs(dx) >= 70 || (Math.abs(dx) >= 35 && Math.abs(dx) / dt > 0.5)) && canMove(dir);   // 距離が十分、または素早いはじき
     if (!go) { reset(s.body, 200); return; }
-    s.body.style.transition = 'transform .11s ease-in, opacity .11s ease-in';
-    s.body.style.transform = `translateX(${dir > 0 ? -70 : 70}px)`; s.body.style.opacity = '0';
-    setTimeout(() => {
-      if (!active()) return;
-      if (dir > 0) studyNext(); else studyPrev();
-      const nb = document.querySelector('#section-study .study-body');
-      if (nb && nb.animate) nb.animate([{ transform: `translateX(${dir > 0 ? 60 : -60}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 190, easing: 'ease-out' });
-    }, 110);
+    // 読み上げをユーザーのタッチ操作から直接開始する（iOSの再生制限対策）。
+    if (!active()) return;
+    if (dir > 0) studyNext(); else studyPrev();
+    const nb = document.querySelector('#section-study .study-body');
+    if (nb && nb.animate) nb.animate([{ transform: `translateX(${dir > 0 ? 60 : -60}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 190, easing: 'ease-out' });
   };
   sec.addEventListener('touchend', end, { passive: true });
   sec.addEventListener('touchcancel', end, { passive: true });
+})();
+
+// 回答済みの問題だけ、左へのスワイプで次へ。縦スクロールやボタン操作とは分ける。
+(function initQuizSwipe() {
+  let gesture = null;
+  function answered(section) {
+    return section === 'test' ? state.testAnswered : section === 'typing' ? state.typingAnswered : state.reviewAnswered;
+  }
+  function ready(section) {
+    return isMobile() && state.section === section && quizInProgress(section) && answered(section);
+  }
+  for (const section of QUIZ_SECTIONS) {
+    const root = document.getElementById('section-' + section);
+    root.addEventListener('touchstart', e => {
+      gesture = null;
+      if (!ready(section) || e.touches.length !== 1 || e.target.closest('button:not(:disabled), input, textarea, a')) return;
+      const card = e.target.closest('.quiz-card');
+      if (!card) return;
+      const point = e.touches[0];
+      gesture = { section, card, x: point.clientX, y: point.clientY, at: Date.now() };
+    }, { passive: true });
+    root.addEventListener('touchmove', e => {
+      if (!gesture) return;
+      if (e.touches.length !== 1) { gesture = null; return; }
+      const point = e.touches[0];
+      if (Math.abs(point.clientY - gesture.y) > 12 && Math.abs(point.clientY - gesture.y) >= Math.abs(point.clientX - gesture.x)) gesture = null;
+    }, { passive: true });
+    root.addEventListener('touchcancel', () => { gesture = null; }, { passive: true });
+    root.addEventListener('touchend', e => {
+      const start = gesture; gesture = null;
+      if (!start || start.section !== section || !ready(section) || root.querySelector('.quiz-card') !== start.card || e.touches.length || e.changedTouches.length !== 1) return;
+      const point = e.changedTouches[0], dx = point.clientX - start.x, dy = point.clientY - start.y;
+      const elapsed = Math.max(1, Date.now() - start.at);
+      if (dx >= 0 || Math.abs(dx) <= Math.abs(dy) * 1.3 || !(Math.abs(dx) >= 70 || (Math.abs(dx) >= 35 && Math.abs(dx) / elapsed > 0.5))) return;
+      if (section === 'test') nextTest();
+      else if (section === 'typing') nextTyping();
+      else if (state.reviewMode === 'test') nextReviewTest();
+      else nextReviewTyping();
+    }, { passive: true });
+  }
 })();
 
 // ── KEYBOARD SHORTCUTS ──
@@ -10805,7 +10900,7 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
 */
 document.addEventListener('keydown', function(e) {
   // 表示モードのボタンは、Enter/Spaceで通常どおり操作する。
-  if (e.target && e.target.closest('#theme-toggle')) return;
+  if (e.target && e.target.closest('#theme-toggle, [onclick^="toggleStudyAutoSpeak"]')) return;
   // inputにフォーカス中は Enter のみ各inputのinlineハンドラに任せ、他は無視
   // e.target でイベント発生元を判定（blur()後にactiveElementが変わっても正しく判定できる）
   const tag = e.target && e.target.tagName;
