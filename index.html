@@ -1394,9 +1394,39 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 }
 .theme-toggle svg { width:19px; height:19px; }
 .theme-toggle:hover { background:var(--color-primary-soft); color:var(--color-primary); }
+.study-controls { display:flex; gap:6px; margin-left:auto; flex:none; }
+.study-controls .study-icon-btn { width:40px; height:40px; padding:0; justify-content:center; border-radius:6px; touch-action:manipulation; -webkit-touch-callout:none; user-select:none; }
+.study-controls .study-icon-btn .ico { width:20px; height:20px; }
+#control-help { position:fixed; z-index:500; max-width:calc(100vw - 24px); padding:8px 12px; border:1px solid var(--color-control-border); border-radius:6px; background:var(--color-surface); color:var(--color-text); box-shadow:0 3px 12px #0003; font-size:13px; pointer-events:none; }
+.result-example { margin-top:12px; padding-top:10px; border-top:1px solid var(--color-border); font-size:13px; line-height:1.65; text-align:left; }
+.result-example .ex-jp { margin-top:4px; color:var(--color-text-secondary); }
+/* 記録は詳細を隠さず、必要な分だけページをスクロールできるようにする。 */
+.rec-wrap { max-height:none; }
+.rec-pane { flex:none; overflow:visible; }
+.rec-card.grow,.rec-card.grow2,.rec-card.list { flex:none; }
+.rec-chart { flex:none; height:180px; }
+.rec-rows,.rec-scroll { max-height:440px; flex:none; }
+.rec-bars div[data-rec-day] { cursor:pointer; }
+.rec-chart [data-rec-day] { cursor:pointer; }
+.rec-chart [data-selected="true"] { fill:var(--color-primary-soft); fill-opacity:.55; }
+.rec-heat button { display:block; height:14px; min-width:0; padding:0; border-radius:2px; background:var(--c-none); }
+.rec-heat button.l1 { background:var(--color-heat-1); }
+.rec-heat button.l2 { background:var(--color-heat-2); }
+.rec-heat button.l3 { background:var(--color-heat-3); }
+.rec-heat button.l4 { background:var(--color-primary); }
+[data-rec-day][data-selected="true"] { outline:2px solid var(--color-primary); outline-offset:1px; }
+.rec-day-details { order:1; }
+.rec-day-details input { width:auto; max-width:100%; padding:7px 9px; font-size:16px; }
+.rec-day-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 16px; margin-top:12px; }
+.rec-day-values dt { font-size:12px; color:var(--color-text-secondary); }
+.rec-day-values dd { margin-top:3px; font-size:15px; font-weight:600; }
+.rec-range-detail { flex:none; }
+.rec-range-detail summary { cursor:pointer; min-height:36px; }
+.rec-range-numbers { padding:8px 0 12px; font-size:12px; line-height:1.7; color:var(--color-text-secondary); }
 @media (max-width:640px) {
   .theme-toggle { width:36px; height:44px; margin-left:3px; }
   .quiz-card { touch-action:pan-y; }
+  .study-controls .study-icon-btn { width:44px; height:44px; }
 }
 
 </style>
@@ -4520,28 +4550,20 @@ const RANGE_PAGES = [
   { id: 'typing', label: 'タイピング', get: () => [state.typingStart, state.typingEnd], set: (s, e) => { state.typingStart = s; state.typingEnd = e; } },
   { id: 'review', label: '復習', defaultEnd: MAX_NO, get: () => [state.reviewStart, state.reviewEnd], set: (s, e) => { state.reviewStart = s; state.reviewEnd = e; } },
 ];
-// 他ページで指定済みの範囲を、ワンタップで適用できるボタン群を返す。
-// 現在の範囲と同じもの・未指定のページは出さない。同じ範囲は1つにまとめる。
+// 学習の範囲だけを、テスト・タイピング・復習へ引き継ぐ。
 function rangeCarryHtml(id, start, end) {
-  const seen = new Map();
-  for (const p of RANGE_PAGES) {
-    if (p.id === id || !window._rangeTouched[p.id]) continue;
-    const [s, e] = p.get();
-    if (!s || !e || (s === start && e === end)) continue;
-    const key = s + '-' + e;
-    if (!seen.has(key)) seen.set(key, { s, e, labels: [] });
-    seen.get(key).labels.push(p.label);
-  }
-  if (!seen.size) return '';
-  const btns = [...seen.values()].map(v =>
-    `<button type="button" class="range-carry-btn" onclick="applyRangePreset('${id}',${v.s},${v.e})">↪ ${v.labels.join('・')}と同じ範囲 <b>No.${v.s}〜${v.e}</b></button>`
-  ).join('');
-  return `<div class="range-carry">${btns}</div>`;
+  if (id === 'study') return '';
+  const [s, e] = RANGE_PAGES[0].get();
+  if (s === start && e === end) return '';
+  return `<div class="range-carry"><button type="button" class="range-carry-btn" onclick="applyRangePreset('${id}',${s},${e})">↪ 学習と同じ範囲 <b>No.${s}〜${e}</b></button></div>`;
 }
 window.toggleRange = function(id) {
   window._rangeOpen[id] = !window._rangeOpen[id];
   const bar = document.getElementById('rbar-' + id);
-  if (bar) bar.classList.toggle('open', !!window._rangeOpen[id]);
+  if (bar) {
+    bar.classList.toggle('open', !!window._rangeOpen[id]);
+    bar.querySelector('.range-summary').setAttribute('aria-expanded', !!window._rangeOpen[id]);
+  }
   if (state.section === 'study') fitStudyLayout();
 };
 function rangeWidget(id, start, end, onApply) {
@@ -9253,6 +9275,10 @@ function getExample(word) {
   if (EXAMPLES[word]) return EXAMPLES[word];
   return null;
 }
+function resultExampleHtml(word) {
+  const example = getExample(word);
+  return example ? `<div class="result-example"><div class="ex-en">${escHtml(example.en)}</div><div class="ex-jp">${escHtml(example.jp)}</div></div>` : '';
+}
 
 function isMobile() { return window.innerWidth <= 640; }
 // 画面回転やウィンドウサイズ変更でモバイル/デスクトップの判定が切り替わった際、
@@ -9320,8 +9346,10 @@ function renderStudy() {
       ${pronHtml(cur.word)}
       <div class="word-meta-row">
         <div class="word-num">No.${cur.no} &nbsp;|&nbsp; ${state.studyIdx+1} / ${words.length}</div>
-        <button type="button" class="hide-toggle-btn ${state.studyHide ? 'on' : ''}" onclick="studyToggleHide(); this.blur();" aria-pressed="${state.studyHide}">${icon(state.studyHide ? 'eyeoff' : 'eye')}意味を隠す: ${state.studyHide ? 'ON' : 'OFF'}</button>
-        ${'speechSynthesis' in window ? `<button type="button" class="hide-toggle-btn ${studyAutoSpeak ? 'on' : ''}" onclick="toggleStudyAutoSpeak(); this.blur();" aria-pressed="${studyAutoSpeak}" aria-label="自動読み上げ">${icon('speaker')}自動読み上げ: ${studyAutoSpeak ? 'ON' : 'OFF'}</button>` : ''}
+        <div class="study-controls">
+          <button type="button" class="hide-toggle-btn study-icon-btn ${state.studyHide ? 'on' : ''}" onclick="studyToggleHide(); this.blur();" aria-label="意味の非表示" aria-pressed="${state.studyHide}" data-help="意味を隠す: ${state.studyHide ? 'ON' : 'OFF'}">${icon(state.studyHide ? 'eyeoff' : 'eye')}</button>
+          ${'speechSynthesis' in window ? `<button type="button" class="hide-toggle-btn study-icon-btn ${studyAutoSpeak ? 'on' : ''}" onclick="toggleStudyAutoSpeak(); this.blur();" aria-pressed="${studyAutoSpeak}" aria-label="自動読み上げ" data-help="自動読み上げ: ${studyAutoSpeak ? 'ON' : 'OFF'}">${studyAutoSpeak ? icon('speaker') : '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM16 9l6 6M22 9l-6 6"/></svg>'}</button>` : ''}
+        </div>
       </div>
       ${statusBadgeHtml(cur.no) ? `<div class="st-row">${statusBadgeHtml(cur.no)}</div>` : ''}
       <div class="reveal-area">
@@ -9573,6 +9601,7 @@ window.answerTest = function(selectedNo, correctNo) {
       <div class="result-word">${escHtml(cur.word)}</div>
       ${pronHtml(cur.word)}
       <div class="result-meanings">${allMeanings}</div>
+      ${resultExampleHtml(cur.word)}
          ${statusLineHtml(cur.no, isCorrect)}
     </div>
     <button class="next-btn" onclick="nextTest()">次へ →</button>`;
@@ -9681,6 +9710,7 @@ window.submitTyping = function() {
       <div class="result-word">${escHtml(cur.word)}</div>
       ${pronHtml(cur.word)}
       <div class="result-meanings">${allMeanings}</div>
+      ${resultExampleHtml(cur.word)}
          ${statusLineHtml(cur.no, isCorrect)}
     </div>
     <button class="next-btn" onclick="nextTyping()">次へ →</button>`;
@@ -9702,6 +9732,7 @@ window.skipTyping = function() {
       <div class="result-word">${escHtml(cur.word)}</div>
       ${pronHtml(cur.word)}
       <div class="result-meanings">${allMeanings}</div>
+      ${resultExampleHtml(cur.word)}
          ${statusLineHtml(cur.no, false)}
     </div>
     <button class="next-btn" onclick="nextTyping()">次へ →</button>`;
@@ -9888,6 +9919,7 @@ window.answerReviewTest = function(selectedNo, correctNo) {
       <div class="result-word">${escHtml(cur.word)}</div>
       ${pronHtml(cur.word)}
       <div class="result-meanings">${allMeanings}</div>
+      ${resultExampleHtml(cur.word)}
       ${statusLineHtml(cur.no, isCorrect)}
     </div>
     <button class="next-btn" onclick="nextReviewTest()">次へ →</button>`;
@@ -9966,6 +9998,7 @@ window.submitReviewTyping = function() {
       <div class="result-word">${escHtml(cur.word)}</div>
       ${pronHtml(cur.word)}
       <div class="result-meanings">${allMeanings}</div>
+      ${resultExampleHtml(cur.word)}
       ${statusLineHtml(cur.no, isCorrect)}
     </div>
     <button class="next-btn" onclick="nextReviewTyping()">次へ →</button>`;
@@ -10658,6 +10691,39 @@ function streakInfo() {
 }
 function recTile(v, unit, label) { return `<div class="rec-tile"><div class="v">${v}<small>${unit}</small></div><div class="l">${label}</div></div>`; }
 
+function recordDayLabel(k) {
+  const d = daySum(k);
+  return `${k}: 解答${d.a}問、正解${d.c}問、誤答${d.a - d.c}問、正答率${d.a ? (d.c / d.a * 100).toFixed(1) + '%' : '記録なし'}、学習で見た回数${d.v}回`;
+}
+function recordDayDetailsHtml() {
+  const k = state.recSelectedDay || dateKey(), d = daySum(k);
+  const value = (label, text) => `<div><dt>${label}</dt><dd>${text}</dd></div>`;
+  return `<div class="rec-card rec-day-details" id="rec-day-details">
+    <h3><label for="rec-day-input">日ごとの詳細</label></h3>
+    <input type="date" id="rec-day-input" value="${k}" max="${dateKey()}" onchange="selectRecordDay(this.value)">
+    <dl class="rec-day-values">
+      ${value('解答数', d.a + '問')}${value('正答率', d.a ? (d.c / d.a * 100).toFixed(1) + '%' : '—')}
+      ${value('正解 / 誤答', `${d.c}問 / ${d.a - d.c}問`)}${value('学習で見た回数', d.v + '回')}
+      ${value('学習ページの時間', fmtDur(d.ts))}${value('テスト・復習などの時間', fmtDur(d.tq))}
+    </dl></div>`;
+}
+window.selectRecordDay = function(k) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || dkey(dayFromKey(k)) !== k || k > dateKey()) return;
+  state.recSelectedDay = k;
+  const panel = document.getElementById('rec-day-details');
+  if (panel) panel.outerHTML = recordDayDetailsHtml();
+  document.querySelectorAll('#section-record [data-rec-day]').forEach(el => { el.dataset.selected = String(el.dataset.recDay === k); });
+  if (panel) document.getElementById('rec-day-details').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+};
+document.getElementById('section-record').addEventListener('click', e => {
+  const day = e.target.closest('[data-rec-day]');
+  if (day) selectRecordDay(day.dataset.recDay);
+});
+document.getElementById('section-record').addEventListener('keydown', e => {
+  const day = e.target.closest('[data-rec-day]');
+  if (day && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectRecordDay(day.dataset.recDay); }
+});
+
 function recSummaryHtml() {
   const today = daySum(dateKey()), st = streakInfo(), sc = statusCounts();
   const answered = Object.keys(history).length, clean = Math.max(0, answered - sc.ever), unans = Math.max(0, MAX_NO - sc.ever - clean);
@@ -10665,7 +10731,7 @@ function recSummaryHtml() {
   const week = recDays(7).map(k => ({ k, ...daySum(k) }));
   const wmax = Math.max(10, ...week.map(x => x.a));
   const wTotal = week.reduce((t, x) => t + x.a, 0), wts = week.reduce((t, x) => t + x.ts, 0), wtq = week.reduce((t, x) => t + x.tq, 0);
-  const bars = week.map((x, i) => `<div class="${i === 6 ? 'tdy' : ''}" title="${x.k}：${x.a}問"><i style="height:${Math.max(x.a ? 6 : 3, x.a / wmax * 100)}%"></i>${i === 6 ? '今日' : WEEKDAYS[dayFromKey(x.k).getDay()]}</div>`).join('');
+  const bars = week.map((x, i) => `<div class="${i === 6 ? 'tdy' : ''}" role="button" tabindex="0" data-rec-day="${x.k}" aria-label="${recordDayLabel(x.k)}" title="${recordDayLabel(x.k)}"><i style="height:${Math.max(x.a ? 6 : 3, x.a / wmax * 100)}%"></i>${i === 6 ? '今日' : WEEKDAYS[dayFromKey(x.k).getDay()]}</div>`).join('');
   return `<div class="rec-tiles">
       ${recTile(today.a, '問', '今日の解答')}${recTile(today.a ? Math.round(today.c / today.a * 100) : '—', today.a ? '%' : '', '今日の正答率')}${recTile(st.cur, '日', '連続学習日数')}
     </div>
@@ -10675,7 +10741,8 @@ function recSummaryHtml() {
     <div class="rec-card opt"><h3>今週の解答数<small>合計 ${wTotal}問</small></h3><div class="rec-bars">${bars}</div></div>
     <div class="rec-card opt"><h3>今週の学習時間<small>合計 ${fmtDurShort(wts + wtq)}</small></h3>
       <div class="rec-stack thin"><i style="width:${(wts + wtq) ? (wts / (wts + wtq) * 100) : 0}%;background:var(--color-chart)"></i><i style="width:${(wts + wtq) ? (wtq / (wts + wtq) * 100) : 0}%;background:var(--primary)"></i></div>
-      <div class="rec-leg"><span style="--c:var(--color-chart)">学習ページ <b>${fmtDurShort(wts)}</b></span><span style="--c:var(--primary)">テスト・復習など <b>${fmtDurShort(wtq)}</b></span></div></div>`;
+      <div class="rec-leg"><span style="--c:var(--color-chart)">学習ページ <b>${fmtDurShort(wts)}</b></span><span style="--c:var(--primary)">テスト・復習など <b>${fmtDurShort(wtq)}</b></span></div></div>
+    ${recordDayDetailsHtml()}`;
 }
 function dayFromKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
 
@@ -10683,6 +10750,7 @@ function recTrendHtml() {
   const span = state.recSpan || 30, days = recDays(span), data = days.map(k => ({ k, ...daySum(k) }));
   const maxA = Math.max(10, ...data.map(x => x.a)), step = 300 / span, bw = Math.max(2, step * 0.68);
   const bars = data.map((x, i) => x.a ? `<rect x="${(i * step + (step - bw) / 2).toFixed(1)}" y="${(110 - x.a / maxA * 100).toFixed(1)}" width="${bw.toFixed(1)}" height="${(x.a / maxA * 100).toFixed(1)}" rx="1.5" fill="${i === span - 1 ? '#2d7a4f' : '#9fd0b5'}"><title>${x.k}：${x.a}問（正解${x.c}）</title></rect>` : '').join('');
+  const targets = data.map((x, i) => `<rect x="${(i * step).toFixed(2)}" y="0" width="${step.toFixed(2)}" height="120" fill="transparent" role="button" tabindex="0" data-rec-day="${x.k}" aria-label="${recordDayLabel(x.k)}"><title>${recordDayLabel(x.k)}</title></rect>`).join('');
   const pts = data.map((x, i) => x.a ? `${(i * step + step / 2).toFixed(1)},${(110 - x.c / x.a * 100).toFixed(1)}` : null).filter(Boolean);
   const tot = data.reduce((t, x) => ({ a: t.a + x.a, c: t.c + x.c }), { a: 0, c: 0 });
   const md = k => { const d = dayFromKey(k); return (d.getMonth() + 1) + '/' + d.getDate(); };
@@ -10694,15 +10762,16 @@ function recTrendHtml() {
     const d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - (25 - c) * 7 + r);
     if (d > t) { cells += '<i class="fut"></i>'; continue; }
     const s = daySum(dkey(d)), n = s.a + s.v, lv = n === 0 ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4;
-    cells += `<i class="l${lv}" title="${dkey(d)}：${s.a}問・${s.v}語を見た"></i>`;
+    cells += `<button type="button" class="l${lv}" data-rec-day="${dkey(d)}" aria-label="${recordDayLabel(dkey(d))}" title="${recordDayLabel(dkey(d))}"></button>`;
   }
   const chips = [7, 30, 90].map(n => `<button type="button" class="${span === n ? 'on' : ''}" onclick="setRecSpan(${n})">${n}日</button>`).join('');
   return `<div class="rec-chips">${chips}</div>
     <div class="rec-card grow"><h3>解答数と正答率<small>${tot.a ? '期間の正答率 ' + Math.round(tot.c / tot.a * 100) + '%' : 'まだ記録がありません'}</small></h3>
-      <div class="rec-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="110" x2="300" y2="110" stroke="#e1ebe5" stroke-width="1"/>${bars}${pts.length > 1 ? `<polyline fill="none" stroke="#c58a12" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${pts.join(' ')}"/>` : ''}</svg></div>
+      <div class="rec-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="日別の解答数と正答率"><line x1="0" y1="110" x2="300" y2="110" stroke="#e1ebe5" stroke-width="1"/>${bars}${pts.length > 1 ? `<polyline fill="none" stroke="#c58a12" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${pts.join(' ')}"/>` : ''}${targets}</svg></div>
       <div class="rec-axis"><span>${md(days[0])}</span><span>最大 ${maxA}問/日</span><span>${md(days[span - 1])}</span></div>
       <div class="rec-leg"><span style="--c:var(--color-chart)">解答数</span><span style="--c:var(--color-chart-rate)">正答率</span></div></div>
-    <div class="rec-card opt" style="order:2"><h3>学習した日<small>濃いほど多く解いた日</small></h3><div class="rec-heat">${cells}</div></div>
+    ${recordDayDetailsHtml()}
+    <div class="rec-card opt" style="order:2"><h3>学習した日<small>日付を選ぶと詳細を表示</small></h3><div class="rec-heat">${cells}</div></div>
     <div class="rec-tiles opt" style="order:3">${recTile(st.cur, '日', '連続学習')}${recTile(st.longest, '日', '最長記録')}${recTile(st.total, '日', '学習した日数')}</div>`;
 }
 
@@ -10718,7 +10787,7 @@ function recRangeHtml() {
       if (history[no]) ans++;
     }
     const w = x => (x / n * 100).toFixed(1) + '%';
-    rows.push(`<div class="rec-row" title="解答済み ${ans}/${n}語"><span>${s0}–${e0}</span><div class="rec-stack"><i style="width:${w(m)};background:var(--c-mastered)"></i><i style="width:${w(v)};background:var(--c-recovering)"></i><i style="width:${w(r)};background:var(--c-review)"></i><i style="width:${w(cl)};background:var(--color-clean)"></i></div><em>${Math.round(ans / n * 100)}%</em></div>`);
+    rows.push(`<details class="rec-range-detail"><summary class="rec-row" aria-label="No.${s0}〜${e0}の詳細"><span>${s0}–${e0}</span><div class="rec-stack"><i style="width:${w(m)};background:var(--c-mastered)"></i><i style="width:${w(v)};background:var(--c-recovering)"></i><i style="width:${w(r)};background:var(--c-review)"></i><i style="width:${w(cl)};background:var(--color-clean)"></i></div><em>${Math.round(ans / n * 100)}%</em></summary><div class="rec-range-numbers">解答済み ${ans} / ${n}語<br>克服済み ${m}語 ／ 克服中 ${v}語 ／ 要復習 ${r}語<br>間違いなし ${cl}語 ／ 未解答 ${n - ans}語</div></details>`);
   }
   const mode = state.recRank || 'miss';
   let list;
@@ -10760,39 +10829,10 @@ function renderRecord() {
     <h2 style="font-size:18px;font-weight:800;"><span class="h-ico">${icon('chart')}</span>記録</h2>
     <div class="seg rec-seg" role="tablist">${tabs.map(([k, l]) => `<button type="button" class="${tab === k ? 'active' : ''}" onclick="setRecTab('${k}')">${l}</button>`).join('')}</div>
     <div class="rec-pane" id="rec-pane">${body}</div></div>`;
-  fitRecord();
 }
 window.setRecTab = function(k) { state.recTab = k; renderRecord(); };
 window.setRecSpan = function(n) { state.recSpan = n; renderRecord(); };
 window.setRecRank = function(m) { state.recRank = m; renderRecord(); };
-// ページ全体がスクロールしないように、枠の高さを画面に合わせ、入りきらないときは下の項目から隠す
-function fitRecord() {
-  const wrap = document.getElementById('rec-wrap');
-  if (!wrap) return;
-  window.scrollTo(0, 0);
-  const topV = wrap.getBoundingClientRect().top;
-  let h;
-  if (isMobile()) {
-    const nav = document.getElementById('nav'), navTop = nav ? nav.getBoundingClientRect().top : window.innerHeight;
-    const padB = parseFloat(getComputedStyle(document.getElementById('content')).paddingBottom) || 0;
-    h = Math.min(navTop - 8, window.innerHeight - padB) - topV;
-  } else {
-    h = Math.min(window.innerHeight - topV - 24, 760);
-  }
-  wrap.style.height = Math.max(240, Math.floor(h)) + 'px';
-  const pane = document.getElementById('rec-pane');
-  measureNoTransition(() => {
-    pane.classList.remove('compact');
-    pane.querySelectorAll('.opt').forEach(e => { e.style.display = ''; });
-    if (pane.scrollHeight > pane.clientHeight + 1) pane.classList.add('compact');
-    for (const e of [...pane.querySelectorAll('.opt')].reverse()) {
-      if (pane.scrollHeight <= pane.clientHeight + 1) break;
-      e.style.display = 'none';
-    }
-  });
-}
-window.addEventListener('resize', () => { if (state && state.section === 'record') fitRecord(); });
-
 // ───────────────────────────────────────────
 // 学習ページ（スマホ）：左右にスライドして単語を移動する
 //  左へスライド＝次の単語 / 右へスライド＝前の単語。指に内容が追従し、離すと次の単語が横から入る。
@@ -10814,7 +10854,7 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
     t = null;
     if (!active() || e.touches.length !== 1) return;
     // 下の操作列と範囲指定の欄、入力欄は対象外。内容エリアの中のボタン（発音・意味を隠す・★）の上から始めても、指が動いたらタップにはならないので、スライドとして扱う
-    if (e.target.closest('input, textarea, a, .range-bar, .study-nav-row')) return;
+    if (e.target.closest('input, textarea, a, .range-bar, .study-nav-row, .study-controls')) return;
     const det = e.target.closest('.study-detail'), body = det && det.querySelector('.study-body');
     if (!body) return;
     const p = e.touches[0];
@@ -10890,6 +10930,63 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
   }
 })();
 
+// 小さなアイコンの説明。長押しは説明だけを表示し、設定を切り替えない。
+(function initControlHelp() {
+  let timer = null, pressed = null, help = null, owner = null, suppressed = null, suppressUntil = 0;
+  function hide() {
+    clearTimeout(timer); timer = null;
+    if (help) help.hidden = true;
+    if (owner) owner.removeAttribute('aria-describedby');
+    owner = null;
+  }
+  function show(button) {
+    if (owner && owner !== button) owner.removeAttribute('aria-describedby');
+    owner = button;
+    if (!help) { help = document.createElement('div'); help.id = 'control-help'; help.setAttribute('role', 'tooltip'); document.body.appendChild(help); }
+    help.textContent = button.dataset.help; help.hidden = false;
+    button.setAttribute('aria-describedby', help.id);
+    const rect = button.getBoundingClientRect();
+    const left = Math.max(12, Math.min(window.innerWidth - help.offsetWidth - 12, rect.left + rect.width / 2 - help.offsetWidth / 2));
+    const top = rect.top - help.offsetHeight - 8;
+    help.style.left = left + 'px';
+    help.style.top = (top >= 8 ? top : rect.bottom + 8) + 'px';
+  }
+  document.addEventListener('pointerover', e => {
+    const button = e.target.closest('[data-help]');
+    if (button && e.pointerType === 'mouse') show(button);
+  });
+  document.addEventListener('pointerout', e => {
+    const button = e.target.closest('[data-help]');
+    if (button && e.pointerType === 'mouse' && !button.contains(e.relatedTarget)) { button.removeAttribute('aria-describedby'); hide(); }
+  });
+  document.addEventListener('focusin', e => { if (e.target.matches('[data-help]') && !pressed) show(e.target); });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('pointerdown', e => {
+    hide(); pressed = null; suppressed = null; suppressUntil = 0;
+    const button = e.target.closest('[data-help]');
+    if (!button || e.pointerType === 'mouse') return;
+    pressed = { button, id:e.pointerId, x:e.clientX, y:e.clientY, held:false };
+    timer = setTimeout(() => { if (pressed && button.isConnected) { pressed.held = true; show(button); } }, 500);
+  });
+  document.addEventListener('pointermove', e => {
+    if (pressed && (e.pointerId !== pressed.id || Math.hypot(e.clientX - pressed.x, e.clientY - pressed.y) > 10)) { hide(); pressed = null; }
+  });
+  function release() {
+    if (pressed && pressed.held) { suppressed = pressed.button; suppressUntil = Date.now() + 600; }
+    hide(); pressed = null;
+  }
+  document.addEventListener('pointerup', release);
+  document.addEventListener('pointercancel', release);
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-help]') === suppressed && Date.now() < suppressUntil) { e.preventDefault(); e.stopImmediatePropagation(); }
+    hide();
+  }, true);
+  document.addEventListener('contextmenu', e => { if (e.target.closest('[data-help]')) e.preventDefault(); });
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('blur', release);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') release(); });
+})();
+
 // ── KEYBOARD SHORTCUTS ──
 /*
   Study   : →/Space/Enter=意味を表示(隠しモード時)→次へ  ←=前へ  M/↑=マーク
@@ -10900,7 +10997,7 @@ window.addEventListener('resize', () => { if (state && state.section === 'record
 */
 document.addEventListener('keydown', function(e) {
   // 表示モードのボタンは、Enter/Spaceで通常どおり操作する。
-  if (e.target && e.target.closest('#theme-toggle, [onclick^="toggleStudyAutoSpeak"]')) return;
+  if (e.target && e.target.closest('#theme-toggle, .study-controls')) return;
   // inputにフォーカス中は Enter のみ各inputのinlineハンドラに任せ、他は無視
   // e.target でイベント発生元を判定（blur()後にactiveElementが変わっても正しく判定できる）
   const tag = e.target && e.target.tagName;
