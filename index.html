@@ -1397,8 +1397,18 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 .theme-toggle svg { width:19px; height:19px; }
 .theme-toggle:hover { background:var(--color-primary-soft); color:var(--color-primary); }
 .study-controls { display:flex; gap:6px; margin-left:auto; flex:none; }
-.study-controls .study-icon-btn { width:40px; height:40px; padding:0; justify-content:center; border-radius:6px; touch-action:manipulation; -webkit-touch-callout:none; user-select:none; }
-.study-controls .study-icon-btn .ico { width:20px; height:20px; }
+.study-controls .study-icon-btn { width:20px; height:20px; padding:0; justify-content:center; border-radius:3px; touch-action:manipulation; -webkit-touch-callout:none; user-select:none; }
+.study-controls .study-icon-btn .ico { width:10px; height:10px; }
+.study-list-panel { min-width:0; overflow-x:hidden; }
+.word-list-item { min-width:0; border-left:2px solid transparent; }
+.word-list-item .num { flex-shrink:0; }
+.word-list-item .w { min-width:0; overflow-wrap:anywhere; }
+.word-list-item .m { min-width:0; }
+.word-list-item .li-star { margin-left:0; }
+@media (min-width:641px) {
+  .study-layout { grid-template-columns:clamp(210px,28%,250px) minmax(0,1fr); }
+  .word-list-item { gap:8px; }
+}
 #control-help { position:fixed; z-index:500; max-width:calc(100vw - 24px); padding:8px 12px; border:1px solid var(--color-control-border); border-radius:6px; background:var(--color-surface); color:var(--color-text); box-shadow:0 3px 12px #0003; font-size:13px; pointer-events:none; }
 .result-example { margin-top:12px; padding-top:10px; border-top:1px solid var(--color-border); font-size:13px; line-height:1.65; text-align:left; }
 .result-example .ex-jp { margin-top:4px; color:var(--color-text-secondary); }
@@ -1428,7 +1438,8 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 @media (max-width:640px) {
   .theme-toggle { width:36px; height:44px; margin-left:3px; }
   .quiz-card { touch-action:pan-y; }
-  .study-controls .study-icon-btn { width:44px; height:44px; }
+  .study-controls .study-icon-btn { width:22px; height:22px; }
+  .study-controls .study-icon-btn .ico { width:11px; height:11px; }
 }
 
 </style>
@@ -4216,6 +4227,7 @@ function applySlotData(d) {
   sessRun = {};
   studyNavigated = false;
   state.studyIdx = 0;
+  state.studyListNeedsReset = true;
   state.studyRevealed = false;
   restoreStudyPos();     // 前回の続きから始める
   QUIZ_SECTIONS.forEach(n => { const el = document.getElementById('section-' + n); if (el) el.innerHTML = ''; });
@@ -9298,15 +9310,20 @@ window.addEventListener('resize', () => {
   }, 150);
 });
 
-function renderStudy() {
+function renderStudy(revealSelection = false) {
   const sec = document.getElementById('section-study');
+  const previousPanel = sec.querySelector('.study-list-panel');
+  // 一覧を作り直しても、ユーザーが選んだスクロール位置を維持する。
+  if (state.studyListNeedsReset) state.studyListScrollTop = 0;
+  else if (previousPanel && previousPanel.offsetParent !== null) state.studyListScrollTop = previousPanel.scrollTop;
   state.studyStart = state.studyStart || 1;
   state.studyEnd = state.studyEnd || 50;
   state.studyTab = state.studyTab || 'list'; // 'list' | 'detail'
   window._rangeCallbacks['study'] = (s,e) => {
     state.studyStart = s; state.studyEnd = e; state.studyIdx = 0; state.studyRevealed = false;
     recordStudyPos();      // 範囲を変えたら、新しい範囲の先頭が「今の位置」になる
-    renderStudy();
+    state.studyListScrollTop = 0;
+    renderStudy(true);
   };
   const words = getRange(state.studyStart, state.studyEnd);
   if (!words.length) { sec.innerHTML = '<div class="empty">この範囲に単語がありません</div>'; return; }
@@ -9369,11 +9386,21 @@ function renderStudy() {
   </div>`;
 
   fitStudyLayout();
-  // scroll selected into view
-  setTimeout(() => {
-    const sel = document.querySelector('.word-list-item.selected');
-    if (sel) sel.scrollIntoView({block:'nearest'});
-  }, 50);
+  const panel = sec.querySelector('.study-list-panel');
+  if (panel.offsetParent !== null) {
+    panel.scrollTop = state.studyListScrollTop || 0;
+    // 前へ・次へで一覧の外へ進んだときだけ、一覧内で最小限スクロールする。
+    // クリックによる選択では動かさず、ページ全体もスクロールしない。
+    if (revealSelection || !previousPanel || state.studyListNeedsReset) {
+      const selected = panel.querySelector('.word-list-item.selected');
+      const itemRect = selected.getBoundingClientRect(), panelRect = panel.getBoundingClientRect();
+      const top = panelRect.top + panel.clientTop, bottom = top + panel.clientHeight;
+      if (itemRect.top < top) panel.scrollTop += itemRect.top - top;
+      else if (itemRect.bottom > bottom) panel.scrollTop += itemRect.bottom - bottom;
+    }
+    state.studyListScrollTop = panel.scrollTop;
+    state.studyListNeedsReset = false;
+  }
 }
 // 学習画面を、ページ全体をスクロールせずに画面内へ収める（PC・スマホ共通）。
 // 一覧・詳細パネルの高さを画面の残り高さに合わせ、詳細に収まらない内容は文字を段階的に詰める。
@@ -9448,7 +9475,7 @@ function fitStudyContent() {
 window.addEventListener('resize', () => { if (state && state.section === 'study') fitStudyLayout(); });
 window.studyTab = function(tab) {
   const changed = state.studyTab !== tab;
-  state.studyTab = tab; renderStudy();
+  state.studyTab = tab; renderStudy(tab === 'list');
   if (tab === 'list') stopSpeaking(); else if (changed) speakStudyWord();
 };
 window.studySelect = function(i) {
@@ -9467,7 +9494,7 @@ window.studyNext = function() {
   if (ni !== state.studyIdx) state.studyRevealed = false;
   state.studyIdx = ni;
   recordStudyPos();
-  renderStudy();
+  renderStudy(true);
   if (changed) speakStudyWord();
 };
 window.studyPrev = function() {
@@ -9476,7 +9503,7 @@ window.studyPrev = function() {
   if (pi !== state.studyIdx) state.studyRevealed = false;
   state.studyIdx = pi;
   recordStudyPos();
-  renderStudy();
+  renderStudy(true);
   if (changed) speakStudyWord();
 };
 // 意味を表示する（再描画せずシートだけ外すので、画面位置は動かない）
