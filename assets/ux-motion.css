@@ -1,0 +1,165 @@
+/* LEAP motion vocabulary: feedback is fast, information enters gently. */
+:root {
+  --ux-fast: 120ms;
+  --ux-component: 220ms;
+  --ux-page: 260ms;
+  --ux-emphasis: 420ms;
+  --ux-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --ux-spring: cubic-bezier(0.22, 1.35, 0.4, 1);
+}
+button,
+[role="button"],
+input,
+summary {
+  transition-property:
+    transform, opacity, background-color, color, border-color, box-shadow;
+  transition-duration: var(--ux-fast);
+  transition-timing-function: var(--ux-ease);
+}
+button:not(:disabled):active,
+[role="button"]:active {
+  transform: scale(0.96);
+}
+button:disabled {
+  cursor: default;
+}
+input:focus-visible {
+  transition-duration: var(--ux-fast);
+}
+.nav-btn {
+  position: relative;
+}
+.nav-btn::after {
+  content: "";
+  position: absolute;
+  inset: auto 25% 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition:
+    opacity var(--ux-fast) var(--ux-ease),
+    transform var(--ux-component) var(--ux-ease);
+}
+.nav-btn.active::after {
+  opacity: 0.65;
+  transform: scaleX(1);
+}
+.nav-btn.active .nav-icon {
+  transition: transform var(--ux-component) var(--ux-spring);
+}
+.mark-btn .ico {
+  transition:
+    fill var(--ux-fast),
+    color var(--ux-fast),
+    transform var(--ux-component) var(--ux-spring);
+}
+.mark-btn.on .ico {
+  transform: scale(1.06);
+}
+.hide-toggle-btn,
+.filter-btn,
+.mode-option,
+.study-tab-btn,
+.seg button,
+.rec-chips button,
+.rec-mini button {
+  transition:
+    background-color var(--ux-fast) var(--ux-ease),
+    color var(--ux-fast) var(--ux-ease),
+    border-color var(--ux-fast) var(--ux-ease),
+    transform var(--ux-fast) var(--ux-ease),
+    box-shadow var(--ux-component) var(--ux-ease);
+}
+.word-list-item {
+  transition:
+    background-color var(--ux-fast) var(--ux-ease),
+    border-color var(--ux-fast) var(--ux-ease);
+}
+.choice-btn {
+  transition:
+    background-color var(--ux-component) var(--ux-ease),
+    color var(--ux-fast),
+    border-color var(--ux-component),
+    transform var(--ux-fast);
+}
+.quiz-progress-bar-fill {
+  transition: width var(--ux-component) var(--ux-ease);
+}
+.rec-heat button {
+  transition:
+    background-color var(--ux-component),
+    outline-color var(--ux-fast),
+    transform var(--ux-fast);
+}
+.ux-number {
+  position: relative;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.ux-number-final {
+  opacity: 0;
+}
+.ux-number-overlay {
+  position: absolute;
+  inset: 0 auto auto 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ux-motion-ready .rec-chart rect:not([data-rec-day]) {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.rec-range-detail[open] .rec-range-numbers,
+.sync-steps[open] > ol {
+  animation: ux-disclose var(--ux-component) var(--ux-ease);
+}
+@keyframes ux-disclose {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):not(.nav-btn):not(.mark-btn):hover {
+    filter: brightness(1.035);
+  }
+  .mode-option:hover,
+  .slot-card:hover {
+    border-color: var(--color-control-border);
+  }
+  .rec-heat button:hover {
+    transform: scale(1.18);
+    z-index: 1;
+  }
+  .nav-btn:not(.active):hover .nav-icon {
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  button:active,
+  [role="button"]:active,
+  .rec-heat button:hover,
+  .mark-btn.on .ico {
+    transform: none !important;
+  }
+  .ux-number-final {
+    opacity: 1;
+  }
+  .ux-number-overlay {
+    display: none;
+  }
+}

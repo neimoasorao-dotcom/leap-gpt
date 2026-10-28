@@ -1,0 +1,403 @@
+/* Interaction surfaces share the motion vocabulary and the app's theme tokens. */
+.ux-ready #mark-toast {
+  display: none;
+}
+.ux-toast-host {
+  position: fixed;
+  z-index: 900;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  width: min(420px, calc(100% - 24px));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+.ux-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--ux-toast-accent, var(--color-primary));
+  border-radius: 12px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: 0 8px 30px #0003;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ux-toast[data-type="success"] {
+  --ux-toast-accent: var(--color-success);
+}
+.ux-toast[data-type="warning"] {
+  --ux-toast-accent: var(--color-warning);
+}
+.ux-toast[data-type="error"] {
+  --ux-toast-accent: var(--color-error);
+}
+.ux-toast-icon {
+  flex: none;
+  color: var(--ux-toast-accent);
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+.ux-toast-message {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ux-toast button {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  min-height: 36px;
+  padding: 6px 9px;
+  font-size: 12px;
+  flex: none;
+  border-radius: 6px;
+}
+.ux-toast button.ux-toast-dismiss {
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  width: 28px;
+}
+.ux-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: 85dvh;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  color: var(--text);
+  background: var(--color-surface);
+  box-shadow: 0 20px 80px #0005;
+  overflow: hidden;
+}
+.ux-dialog::backdrop {
+  background: #07131c70;
+  animation: ux-backdrop-in var(--ux-component) var(--ux-ease);
+}
+.ux-sheet-head {
+  padding: 18px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ux-sheet-head h2 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0;
+}
+.ux-sheet-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ui-soft);
+  color: var(--text);
+  font-size: 20px;
+}
+.ux-sheet-body {
+  padding: 8px 20px max(20px, env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  max-height: calc(85dvh - 90px);
+  overscroll-behavior: contain;
+}
+.ux-sheet-handle {
+  display: none;
+}
+.ux-sheet-body label {
+  display: block;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.ux-sheet-body p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 8px 0 16px;
+}
+.ux-sheet-body .ux-sheet-options {
+  display: grid;
+  gap: 8px;
+}
+.ux-sheet-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px;
+  min-height: 46px;
+  text-align: left;
+  background: var(--ui-soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 14px;
+}
+.ux-sheet-option[aria-pressed="true"] {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+.ux-sheet-option[aria-pressed="true"]::after {
+  content: "✓";
+  color: var(--primary);
+}
+.ux-sheet-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.ux-sheet-actions button {
+  flex: 1;
+}
+.ux-range-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 12px;
+}
+.ux-range-inputs input {
+  width: 100%;
+  font-size: 18px;
+}
+.ux-range-inputs > span {
+  padding-bottom: 12px;
+}
+.ux-mobile-filters {
+  display: none;
+}
+.ux-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+.ux-page-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.ux-pull {
+  position: fixed;
+  z-index: 400;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 18px #0002;
+  color: var(--text);
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -60px);
+}
+.ux-pull[hidden] {
+  display: none;
+}
+.ux-pull-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 19px;
+}
+.ux-pull[data-state="loading"] .ux-pull-glyph {
+  animation: ux-spin 0.8s linear infinite;
+}
+.ux-busy {
+  position: relative;
+}
+.ux-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: inherit;
+  background: var(--color-surface);
+  pointer-events: none;
+}
+.ux-skeleton-row {
+  height: 12px;
+  border-radius: 5px;
+  background: var(--color-divider);
+  position: relative;
+  overflow: hidden;
+}
+.ux-skeleton-row:nth-child(2) {
+  width: 70%;
+}
+.ux-skeleton-row:last-child {
+  width: 85%;
+  height: 44px;
+}
+.ux-skeleton-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-surface-secondary),
+    transparent
+  );
+  animation: ux-shimmer 1.3s linear infinite;
+}
+.ux-skeleton[data-kind="stats"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0;
+  gap: 8px;
+}
+.ux-skeleton-tile {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  align-content: center;
+  gap: 9px;
+}
+.ux-skeleton-tile .ux-skeleton-row:first-child {
+  height: 24px;
+  width: 55%;
+}
+.ux-skeleton-tile .ux-skeleton-row:last-child {
+  height: 10px;
+  width: 80%;
+}
+.ux-skeleton[data-kind="list"] {
+  align-content: start;
+  overflow: hidden;
+}
+.ux-skeleton-item {
+  padding: 9px 0;
+  display: grid;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.ux-skeleton-item .ux-skeleton-row:first-child {
+  height: 16px;
+  width: 40%;
+}
+.ux-skeleton-item .ux-skeleton-row:last-child {
+  height: 10px;
+  width: 75%;
+}
+.ux-busy-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.ux-swiping {
+  will-change: transform;
+  background: var(--color-primary-soft) !important;
+}
+.ux-swipe-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 10px;
+}
+@keyframes ux-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ux-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes ux-backdrop-in {
+  from {
+    background: #07131c00;
+  }
+  to {
+    background: #07131c70;
+  }
+}
+@media (max-width: 640px) {
+  .ux-toast-host {
+    bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
+  }
+  body:has(#section-study[style*="block"]) .ux-toast-host {
+    bottom: calc(var(--nav-h) + 76px + env(safe-area-inset-bottom, 0px));
+  }
+  .ux-dialog {
+    position: fixed;
+    inset: auto 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    max-height: 88dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+  }
+  .ux-sheet-handle {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 28px;
+    background: transparent;
+    touch-action: none;
+    cursor: grab;
+  }
+  .ux-sheet-handle::before {
+    content: "";
+    width: 36px;
+    height: 4px;
+    border-radius: 3px;
+    background: var(--color-control-border);
+  }
+  .ux-sheet-head {
+    padding-top: 0;
+  }
+  .ux-sheet-body {
+    max-height: calc(88dvh - 104px);
+  }
+  .ux-ready .list-filters,
+  .ux-ready #section-review .rv-chips {
+    display: none;
+  }
+  .ux-ready .ux-mobile-filters {
+    display: inline-flex;
+  }
+  .ux-refresh-button {
+    min-height: 42px;
+  }
+  .ux-ready:has(#section-record[style*="block"]),
+  .ux-ready:has(#section-wordlist[style*="block"]),
+  .ux-ready:has(#section-settings[style*="block"]) {
+    overscroll-behavior-y: contain;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-dialog::backdrop,
+  .ux-skeleton-row::after,
+  .ux-pull-glyph {
+    animation: none !important;
+  }
+  .ux-toast,
+  .ux-dialog,
+  .ux-pull,
+  .ux-swiping {
+    transition: none !important;
+  }
+}

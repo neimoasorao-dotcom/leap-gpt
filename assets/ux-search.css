@@ -1,0 +1,142 @@
+.ux-search {
+  position: relative;
+  margin-bottom: 12px;
+  isolation: isolate;
+  z-index: 30;
+}
+.ux-search #list-search-input {
+  margin-bottom: 0 !important;
+  padding-right: 36px;
+}
+.ux-search::after {
+  content: "⌕";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 22px;
+  pointer-events: none;
+}
+.ux-search-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 45;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--color-surface);
+  border: 1px solid var(--color-control-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px #0002;
+  padding: 5px;
+  animation: ux-search-open var(--ux-component, 200ms)
+    var(--ux-ease, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+.ux-search-options[hidden] {
+  display: none;
+}
+.ux-search-above .ux-search-options {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.ux-search-heading {
+  padding: 6px 9px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ux-search-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 30px 10px 10px;
+  min-height: 46px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background var(--ux-fast, 120ms) var(--ux-ease, ease);
+}
+.ux-search-option:hover,
+.ux-search-option[aria-selected="true"] {
+  background: var(--color-primary-soft);
+}
+.ux-search-option[aria-selected="true"] {
+  outline: 1px solid var(--color-primary);
+  outline-offset: -1px;
+}
+.ux-search-term {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ux-search-meaning {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ux-search-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 17px;
+}
+.ux-search-empty {
+  padding: 14px 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.ux-search-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ux-search-picked {
+  animation: ux-search-picked var(--ux-component, 200ms) var(--ux-ease, ease);
+}
+@keyframes ux-search-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ux-search-picked {
+  from {
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-search-options,
+  .ux-search-picked {
+    animation: none;
+  }
+  .ux-search-option {
+    transition: none;
+  }
+}
+@media (max-width: 640px) {
+  .ux-search #list-search-input {
+    font-size: 16px;
+  }
+}
